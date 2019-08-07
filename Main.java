@@ -14,6 +14,7 @@ public class Main {
 
 	public static void main(String[] args) {
 		Scanner scan = new Scanner(System.in);
+		System.out.println("多线程下载器V19.0807.1");
 		System.out.println("下载地址:");
 		String url = scan.nextLine();
 		System.out.println("线程数量:");
@@ -46,7 +47,7 @@ public class Main {
 		while (true) {
 			if (downloader.isFinished())
 				break;
-			System.out.println("\033[F\033[2K" + downloader);
+			System.err.println("\033[F\033[2K" + downloader);
 			try {
 				Thread.sleep(100);
 			} catch(Exception e) {}
