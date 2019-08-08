@@ -24,6 +24,9 @@ public class BufferedRandomAccessFile extends RandomAccessFile {
 		buf = new byte[bufsize];
 	}
 
+	/**
+	 * 立即刷新缓冲区
+	 */
 	public void flush() throws IOException {
 		super.write(buf, 0, n);
 		n = 0;
@@ -36,6 +39,7 @@ public class BufferedRandomAccessFile extends RandomAccessFile {
 	public void write(byte[] b, int off, int len) throws IOException {
 		if (b == null || len < 1)
 			return;
+	/**
 		if (len > bufsize || (n + len) > bufsize) {
 			byte[] count = new byte[len + n];
 			System.arraycopy(buf, 0, count, 0, n);
@@ -44,6 +48,17 @@ public class BufferedRandomAccessFile extends RandomAccessFile {
 			n = 0;
 			return;
 		}
+	*/
+		if (len > bufsize) { // 本次写入无需缓冲, 先刷新流, 再调用父类方法直接写入
+			flush();
+			super.write(b, off, len);
+			return;
+		}
+
+		if ((n + len) > bufsize) { // 缓冲区即将满, 立即刷新
+			flush();
+		}
+
 		// buffered
 		System.arraycopy(b, off, buf, n, len);
 		n += len;
