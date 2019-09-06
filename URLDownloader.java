@@ -131,6 +131,7 @@ class URLDownloader {
 
 	class DownTh implements Runnable {
 		int n = 0; // 子线程编号
+		int dsize = (int) length / URLDownloader.this.n;
 		HttpURLConnection conn = null;
 		BufferedRandomAccessFile raf = null;
 
@@ -141,15 +142,18 @@ class URLDownloader {
 		public void run() {
 			InputStream is = null;
 			try {
-				raf = new BufferedRandomAccessFile(file, "rw", 1024 * 1024 * 20);
+				//raf = new BufferedRandomAccessFile(file, "rw", 1024 * 1024 * 20);
+				// 缓冲区大小有待商榷
 				conn = (HttpURLConnection) url.openConnection();
 				String range = String.format("bytes=%d-%d",
-					 n * (length / URLDownloader.this.n),
-					 n == URLDownloader.this.n - 1 ? length - 1 : ((n + 1) * (length / URLDownloader.this.n) - 1));
+					 n * dsize,
+					 n == URLDownloader.this.n - 1 ? length - 1 : ((n + 1) * dsize - 1));
 				conn.setRequestProperty("Range", range);
 				System.out.printf("%s -> %s\n", Thread.currentThread().getName(), range);
 				conn.connect();
-				raf.seek(n * (length / URLDownloader.this.n));
+				// 确定缓冲区大小, 最大20M, 且不能超过线程任务
+				raf = new BufferedRandomAccessFile(file, "rw", (1024 * 1024 * 20) > dsize ? dsize : (1024 * 1024 * 20));
+				raf.seek(n * dsize);
 
 				// save
 				int bn = 0;
@@ -162,12 +166,12 @@ class URLDownloader {
 					updateProgress(bn);
 					Thread.sleep(1);
 				}
-				System.out.println(Thread.currentThread().getName() + "下载完成");
+				Main.pt(Thread.currentThread().getName() + "下载完成", true);
 			} catch (InterruptedException e) {
 				// stop
 			} catch (Exception e) {
 				// retry
-				System.out.println(Thread.currentThread().getName() + " -> " + e.getMessage());
+				Main.pt(Thread.currentThread().getName() + " -> " + e.getMessage(), true);
 				run();
 			} finally {
 				try { raf.flush(); } catch (Exception e) {}
